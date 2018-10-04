@@ -16,16 +16,24 @@ const frame =   {
 const xDivider = frame.x / 2;
 const yDivider = frame.y / 2;
 
+const defaultState = {
+    elements: [
+        { name: 'topleft', angle: 0, active: false },
+        { name: 'topright', angle: 0, active: false },
+        { name: 'bottomleft', angle: 0, active: false },
+        { name: 'bottomright', angle: 0, active: false }
+    ],
+};
+
 
 
 //  Attempting to be ES6 compliant
 
 export default class App extends React.Component {
 
-
-
     constructor(props) {
         super(props);
+
 
         this.state = {
             elements: [
@@ -44,14 +52,74 @@ export default class App extends React.Component {
     setActiveElement({ moveX, moveY, dx, dy }) {
         console.log('moveX: '+moveX);
         console.log('moveY: '+moveY);
-        return true;
+        let tag = '';
+
+        //
+        if (moveY <= yDivider){
+            tag += 'top';
+        } else if (moveY > yDivider) {
+            tag += 'bottom';
+        }
+
+        if (moveX >= xDivider){
+            tag += 'right';
+        } else if (moveX < xDivider){
+            tag += 'left';
+        }
+        //  Update the current State once a burner has been selected
+        let elements = [...this.state.elements];
+        let index = elements.findIndex(el => el.name === tag);
+        elements[index] = {...elements[index],
+            angle: this.cartesianToPolar(moveX,moveY,tag), active: true};
+        this.setState({ elements });
+    }
+
+    cartesianToPolar( x, y , tag){
+        let anchor = {
+            x: 0,
+            y: 0
+        };
+
+        //  TODO: Reduce expression to ternary statements
+        //  More verbose but debuggable in this form
+        if (tag == 'topleft'){
+            anchor.x = xDivider / 2;
+            anchor.y = yDivider / 2;
+        } else if (tag == 'topright'){
+            anchor.x = xDivider + (xDivider / 2);
+            anchor.y = yDivider / 2;
+        } else if (tag == 'bottomleft'){
+            anchor.x = xDivider / 2;
+            anchor.y = yDivider + (yDivider / 2);
+        } else if (tag == 'bottomright'){
+            anchor.x = xDivider + (xDivider / 2);
+            anchor.y = yDivider + (yDivider / 2);
+        }
+
+
+        let correctedY = y - anchor.y;
+        let correctedX = x - anchor.x;
+        return Math.round((180/Math.PI) * Math.atan2(correctedY,correctedX));
+    }
+
+    polarToPercentage( degree ){
+        return ((degree * 100)/360);
     }
 
     componentWillMount() {
 
         this._panResponder = PanResponder.create({
             onStartShouldSetPanResponder: (evt, gestureState) => true,
-            onMoveShouldSetPanResponder: (evt, gestureState) => this.setActiveElement(gestureState),
+            onMoveShouldSetPanResponder: (evt, gestureState) => true,
+            onPanResponderRelease: (evt, gestureState) => {
+                // The user has released all touches while this view is the
+                // responder. This typically means a gesture has succeeded
+                console.log('Release @ X,Y: '+ gestureState.moveX+ ','+gestureState.moveY );
+
+                //  Start Timer logic it to the appropriate element index
+                //  elements.findIndex(el => el.active === true)
+
+            },
             onPanResponderMove: (evt,gestureState) => {
                 this.setActiveElement(gestureState);
             }
@@ -61,54 +129,56 @@ export default class App extends React.Component {
     render() {
         return (
             <View style={styles.container} {...this._panResponder.panHandlers}>
-                <View style={styles.elementWrapper}>
+                <View style={styles.elementWrapper}
+                >
                     <ProgressCircle
-                                percent={30}
+                                percent={this.polarToPercentage(this.state.elements[0].angle)}
                                 radius={50}
                                 borderWidth={8}
                                 color="#3399FF"
                                 shadowColor="#999"
                                 bgColor="#fff"
                             >
-                                <Text style={{ fontSize: 18 }}>{'30%'}</Text>
+                                <Text style={{ fontSize: 18 }}>{this.state.elements[0].angle}</Text>
                     </ProgressCircle>
                 </View>
                 <View style={styles.elementWrapper}>
                     <ProgressCircle
-                                percent={30}
+                                percent={this.polarToPercentage(this.state.elements[1].angle)}
                                 radius={50}
                                 borderWidth={8}
                                 color="#3399FF"
                                 shadowColor="#999"
                                 bgColor="#fff"
                             >
-                                <Text style={{ fontSize: 18 }}>{'30%'}</Text>
+                                <Text style={{ fontSize: 18 }}>{this.state.elements[1].angle}</Text>
                     </ProgressCircle>
                 </View>
                 <View style={styles.elementWrapper}>
                     <ProgressCircle
-                                percent={30}
+                                percent={this.polarToPercentage(this.state.elements[2].angle)}
                                 radius={50}
                                 borderWidth={8}
                                 color="#3399FF"
                                 shadowColor="#999"
                                 bgColor="#fff"
                             >
-                                <Text style={{ fontSize: 18 }}>{'30%'}</Text>
+                                <Text style={{ fontSize: 18 }}>{this.state.elements[2].angle}</Text>
                     </ProgressCircle>
                 </View>
                 <View style={styles.elementWrapper}>
                     <ProgressCircle
-                                percent={30}
+                                percent={this.polarToPercentage(this.state.elements[3].angle)}
                                 radius={50}
                                 borderWidth={8}
                                 color="#3399FF"
                                 shadowColor="#999"
                                 bgColor="#fff"
                             >
-                                <Text style={{ fontSize: 18 }}>{'30%'}</Text>
+                                <Text style={{ fontSize: 18 }}>{this.state.elements[3].angle}</Text>
                     </ProgressCircle>
                 </View>
+
             </View>
 
         );
