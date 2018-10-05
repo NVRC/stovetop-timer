@@ -70,11 +70,11 @@ export default class App extends React.Component {
         let elements = [...this.state.elements];
         let index = elements.findIndex(el => el.name === tag);
         elements[index] = {...elements[index],
-            angle: this.cartesianToPolar(moveX,moveY,tag), active: true};
+            angle: this.cartesianToAngle(moveX,moveY,tag), active: true};
         this.setState({ elements });
     }
 
-    cartesianToPolar( x, y , tag){
+    cartesianToAngle( x, y , tag){
         let anchor = {
             x: 0,
             y: 0
@@ -96,10 +96,14 @@ export default class App extends React.Component {
             anchor.y = yDivider + (yDivider / 2);
         }
 
+        let deltaY = y - anchor.y;
+        let deltaX = x - anchor.x;
+        let Victor = require('victor');
+        let vec = new Victor(x > anchor.x ? x - anchor.x : - anchor.x + x,
+            y > anchor.y ? - y + anchor.y : - y + anchor.y);
 
-        let correctedY = y - anchor.y;
-        let correctedX = x - anchor.x;
-        return Math.round((180/Math.PI) * Math.atan2(correctedY,correctedX));
+        let refAngle = vec.verticalAngleDeg();
+        return refAngle < 0 ? ((180 + refAngle) + 180) : refAngle;
     }
 
     polarToPercentage( degree ){
