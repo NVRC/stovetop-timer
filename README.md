@@ -3,14 +3,14 @@
 ##Display division
 Implemented flexbox CSS layouts to achieve a 2x2 grid
 
-(0,0)
+    (0,0)
     ------ xDiv -------
     |                 |
     |                 |
     |   *         *   |
     |                 |
     |                 |
-   yDiv               |
+    yDiv              |
     |                 |
     |                 |
     |   *         *   |
