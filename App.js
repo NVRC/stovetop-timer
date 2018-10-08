@@ -76,18 +76,6 @@ const defaultTime = {
 
 const timer = require('react-native-timer');
 
-// timers maintained in the Map timer.intervals
-timer.setInterval('SecondsThread', () =>{
-    //  Decrement elements
-    elementArray.forEach((name)=>{
-        if(timer.intervalExists(name)){
-            console.log('decrement :' + name);
-        }
-    });
-
-}, 1000);
-
-
 
 
 
@@ -349,6 +337,12 @@ export default class App extends React.Component {
                 this.setState({ elements });
                 //  Start Timer logic it to the appropriate element index
                 //  elements.findIndex(el => el.active === true)
+                let tag = elements[index].name;
+                timer.setInterval(tag, (tag)=>{
+                    console.log('dec: '+ tag);
+                }, 1000);
+
+
 
 
 
