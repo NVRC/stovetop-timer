@@ -67,14 +67,18 @@ const backgroundColor = "#fff";
 const SECONDS_LABEL = 's';
 const MINUTES_LABEL = 'm';
 const HOURS_LABEL = 'h';
+const COUNTDOWN_LABEL = 'countdown';
 
 const defaultTime = {
-    sec: 0,
-    min: 0,
+    secs: 0,
+    mins: 0,
     hours: 0,
 };
 
 const timer = require('react-native-timer');
+const _ = require('lodash');
+const contextHelper = require('./helpers/contextcontextHelper.js');
+
 
 
 
@@ -89,80 +93,18 @@ export default class App extends React.Component {
 
         this.state = {
             elements: [
-                { name: 'topleft', angle: 0, active: false, radius:  rad, border: borderW, color: windupColor, incState: SECONDS_LABEL, time: defaultTime, },
-                { name: 'topright', angle: 0, active: false, radius:  rad, border: borderW, color: windupColor, incState: SECONDS_LABEL, time: defaultTime, },
-                { name: 'bottomleft', angle: 0, active: false, radius:  rad, border: borderW, color: windupColor, incState: SECONDS_LABEL, time: defaultTime, },
-                { name: 'bottomright', angle: 0, active: false, radius:  rad, border: borderW, color: windupColor, incState: SECONDS_LABEL, time: defaultTime, }
+                { name: 'topleft', angle: 0, active: false, radius:  rad, border: borderW, color: windupColor, incState: SECONDS_LABEL, time: defaultTime, timer: null,},
+                { name: 'topright', angle: 0, active: false, radius:  rad, border: borderW, color: windupColor, incState: SECONDS_LABEL, time: defaultTime, timer: null,},
+                { name: 'bottomleft', angle: 0, active: false, radius:  rad, border: borderW, color: windupColor, incState: SECONDS_LABEL, time: defaultTime, timer: null,},
+                { name: 'bottomright', angle: 0, active: false, radius:  rad, border: borderW, color: windupColor, incState: SECONDS_LABEL, time: defaultTime, timer: null,}
             ],
         };
 
     }
 
-    selectNextState( state, dirForward ){
-        switch (state) {
-            case SECONDS_LABEL:
-                return {
-                    label: dirForward == true ? MINUTES_LABEL : SECONDS_LABEL,
-                    mods: this.getCSSMods(MINUTES_LABEL),
-                };
-                break;
 
-            case MINUTES_LABEL:
-                return {
-                    label: dirForward == true ? HOURS_LABEL : SECONDS_LABEL,
-                    mods: this.getCSSMods(HOURS_LABEL),
-                };
-                break;
 
-            case HOURS_LABEL:
-                let labelString;
-                if (dirForward == 'decrement'){
-                    labelString = HOURS_LABEL;
-                } else if (dirForward){
-                    labelString = HOURS_LABEL;
-                } else if (!dirForward) {
-                    labelString = MINUTES_LABEL;
-                }
-                return {
-                    label: labelString,
-                    mods: this.getCSSMods(HOURS_LABEL),
-                };
-                break;
-            default:
-                break;
-        }
-    }
 
-    getCSSMods( label ){
-        switch (label) {
-            case SECONDS_LABEL:
-                return {
-                    borderMod: 1,
-                    radiusMod: 10,
-                };
-                break;
-
-            case MINUTES_LABEL:
-                return {
-                    borderMod: 2,
-                    radiusMod: 12,
-                };
-                break;
-
-            case HOURS_LABEL:
-                return {
-                    borderMod: 3,
-                    radiusMod: 14,
-                };
-                break;
-            default:
-                return {
-                    borderMod: 0,
-                    radiusMod: 0,
-                };
-                break;
-        }
-    }
 
 
     setActiveElement({ moveX, moveY, dx, dy }) {
@@ -200,7 +142,7 @@ export default class App extends React.Component {
         if (prevAngle > 360 - rotationalIncrementationBuffer &&
                 computedAngle > 0 &&
                 computedAngle < rotationalIncrementationBuffer){
-                    computedState = this.selectNextState(elements[index].incState, true);
+                    computedState = contextHelper.selectNextState(elements[index].incState, true);
                     if ( computedState.label == HOURS_LABEL){
                         tempTime.hours = tempTime.hours + 1;
                     }
@@ -211,9 +153,9 @@ export default class App extends React.Component {
         } else if ( prevAngle < rotationalIncrementationBuffer &&
                 computedAngle > 360 - rotationalIncrementationBuffer){
                     if (tempTime.hours == 1){
-                        computedState = this.selectNextState(elements[index].incState, false);
+                        computedState = contextHelper.selectNextState(elements[index].incState, false);
                     } else {
-                        computedState = this.selectNextState(elements[index].incState, 'decrement');
+                        computedState = contextHelper.selectNextState(elements[index].incState, 'decrement');
                     }
                     if ( computedState.label == HOURS_LABEL){
                         tempTime.hours = tempTime.hours - 1;
@@ -223,7 +165,7 @@ export default class App extends React.Component {
                     tempRad = computedState.mods.radiusMod;
 
         } else {
-            computedMods = this.getCSSMods(elements[index].incState);
+            computedMods = contextHelper.getCSSMods(elements[index].incState);
             tempState = elements[index].incState;
             tempBorder = computedMods.borderMod;
             tempRad = computedMods.radiusMod;
@@ -233,7 +175,7 @@ export default class App extends React.Component {
         elements[index] = {...elements[index],
             angle: computedAngle, active: true,
             radius: rad + tempRad, border: borderW + tempBorder,
-            incState: tempState, time: tempTime,
+            incState: tempState, time: tempTime, timer: tempTime
         };
 
         this.setState({ elements });
@@ -305,16 +247,6 @@ export default class App extends React.Component {
         return string;
     }
 
-    timeToPercent( time ){
-
-    }
-
-    calcTime( time ){
-        var totalTime = time.secs + (time.mins * 60) + (time.hours * 60 * 60);
-        console.log('tTotal: '+ totalTime);
-
-        //this.setState({ elements });
-    }
 
 
 
@@ -332,14 +264,39 @@ export default class App extends React.Component {
                 let elements = [...this.state.elements];
                 let index = elements.findIndex(el => el.active === true);
                 elements[index] = {...elements[index],
-                    active: false,
-                    radius: rad, border: borderW, color: countdownColor};
+                    active: COUNTDOWN_LABEL,
+                    radius: rad, border: borderW, color: countdownColor,};
                 this.setState({ elements });
                 //  Start Timer logic it to the appropriate element index
                 //  elements.findIndex(el => el.active === true)
-                let tag = elements[index].name;
-                timer.setInterval(tag, (tag)=>{
-                    console.log('dec: '+ tag);
+
+                timer.setInterval( elements[index].name, ()=>{
+                    //  Decrement time
+                    let elements = [...this.state.elements];
+                    //  Find the indexes of elements currently in COUNTDOWN state
+                    let indexes = _.map(_.keys(_.pickBy(elements,
+                         {active:COUNTDOWN_LABEL})), Number);
+                    for (let index in indexes){
+                        console.log('dec: '+ elements[index].name);
+                        console.log('element time: '+ elements[index].time);
+                        var decTime = contextHelper.getDecrementedTime(elements[index].time);
+                        if (decTime.secs == 0 && decTime.mins == 0 && decTime.hours == 0){
+                            //  Alarm alert
+                            console.log('timer trigger');
+                            timer.clearInterval(tag);
+                            elements[index] = {...elements[index],
+                                timer: null, time: defaultTime, active: false};
+                            this.setState({elements});
+                        } else {
+                            elements[index] = {...elements[index],
+                                time: decTime, active: COUNTDOWN_LABEL,};
+                            this.setState({elements});
+                        }
+                    }
+
+
+
+
                 }, 1000);
 
 
@@ -352,64 +309,66 @@ export default class App extends React.Component {
     }
 
     render() {
+        var _state = this.state.elements;
         return (
             <View style={styles.container} {...this._panResponder.panHandlers}>
                 <View style={styles.elementWrapper}
                 >
+
                     <ProgressCircle
-                                percent={this.polarToPercentage(this.state.elements[0].angle)}
-                                radius={this.state.elements[0].radius}
-                                borderWidth={this.state.elements[0].border}
-                                color={this.state.elements[0].color}
+                                percent={_state[0].active === COUNTDOWN_LABEL ? this.timeToPercent(_state[0].time, _state[0].timer) : this.polarToPercentage(_state[0].angle)}
+                                radius={_state[0].radius}
+                                borderWidth={_state[0].border}
+                                color={_state[0].color}
                                 shadowColor={this.shadowColor}
                                 bgColor={this.backgroundColor}
                             >
-                                <Text style={{ fontSize: 18 }}>{this.degreeToTime(this.state.elements[0].angle,
-                                this.state.elements[0].incState,
-                                this.state.elements[0].time.hours)}</Text>
+                                <Text style={{ fontSize: 18 }}>{_state[0].active === COUNTDOWN_LABEL ? this.timeToString(_state[0].time) : this.degreeToTime(_state[0].angle,
+                                _state[0].incState,
+                                _state[0].time.hours)}</Text>
+                    </ProgressCircle>
+                </View>
+                <View style={styles.elementWrapper}>
+                <ProgressCircle
+                            percent={_state[1].active === COUNTDOWN_LABEL ? this.timeToPercent(_state[1].time, _state[1].timer) : this.polarToPercentage(_state[1].angle)}
+                            radius={_state[1].radius}
+                            borderWidth={_state[1].border}
+                            color={_state[1].color}
+                            shadowColor={this.shadowColor}
+                            bgColor={this.backgroundColor}
+                        >
+                            <Text style={{ fontSize: 18 }}>{this.degreeToTime(_state[1].angle,
+                            _state[1].incState,
+                            _state[1].time.hours)}</Text>
+                </ProgressCircle>
+                </View>
+                <View style={styles.elementWrapper}>
+                    <ProgressCircle
+                                percent={_state[2].active === COUNTDOWN_LABEL ? this.timeToPercent(_state[2].time, _state[2].timer) : this.polarToPercentage(_state[2].angle)}
+                                radius={_state[2].radius}
+                                borderWidth={_state[2].border}
+                                color={_state[2].color}
+                                shadowColor={this.shadowColor}
+                                bgColor={this.backgroundColor}
+                            >
+                                <Text style={{ fontSize: 18 }}>{this.degreeToTime(_state[2].angle,
+                                _state[2].incState,
+                                _state[2].time.hours)}</Text>
                     </ProgressCircle>
                 </View>
                 <View style={styles.elementWrapper}>
                     <ProgressCircle
-                                percent={this.polarToPercentage(this.state.elements[1].angle)}
-                                radius={this.state.elements[1].radius}
-                                borderWidth={this.state.elements[1].border}
-                                color={this.state.elements[1].color}
+                                percent={_state[3].active == COUNTDOWN_LABEL ? this.timeToPercent(_state[3].time, _state[3].timer) : this.polarToPercentage(_state[3].angle)}
+                                radius={_state[3].radius}
+                                borderWidth={_state[3].border}
+                                color={_state[3].color}
                                 shadowColor={this.shadowColor}
                                 bgColor={this.backgroundColor}
                             >
-                                <Text style={{ fontSize: 18 }}>{this.degreeToTime(this.state.elements[1].angle,
-                                this.state.elements[1].incState,
-                                this.state.elements[1].time.hours)}</Text>
-                    </ProgressCircle>
-                </View>
-                <View style={styles.elementWrapper}>
-                    <ProgressCircle
-                                percent={this.polarToPercentage(this.state.elements[2].angle)}
-                                radius={this.state.elements[2].radius}
-                                borderWidth={this.state.elements[2].border}
-                                color={this.state.elements[2].color}
-                                shadowColor={this.shadowColor}
-                                bgColor={this.backgroundColor}
-                            >
-                                <Text style={{ fontSize: 18 }}>{this.degreeToTime(this.state.elements[2].angle,
-                                this.state.elements[2].incState,
-                                this.state.elements[2].time.hours)}</Text>
-                    </ProgressCircle>
-                </View>
-                <View style={styles.elementWrapper}>
-                    <ProgressCircle
-                                percent={this.polarToPercentage(this.state.elements[3].angle)}
-                                radius={this.state.elements[3].radius}
-                                borderWidth={this.state.elements[3].border}
-                                color={this.state.elements[3].color}
-                                shadowColor={this.shadowColor}
-                                bgColor={this.backgroundColor}
-                            >
-                                <Text style={{ fontSize: 18 }}>{this.degreeToTime(this.state.elements[3].angle,
-                                this.state.elements[3].incState,
-                                this.state.elements[3].time.hours)}</Text>
-                    </ProgressCircle>
+                                <Text style={{ fontSize: 18 }}>{this.degreeToTime(_state[3].angle,
+                                _state[3].incState,
+                                _state[3].time.hours)}</Text>
+                </ProgressCircle>
                 </View>
 
             </View>
