@@ -77,7 +77,7 @@ const defaultTime = {
 
 const timer = require('react-native-timer');
 const _ = require('lodash');
-const contextHelper = require('./helpers/contextcontextHelper.js');
+const contextHelper = require('./helpers/contextHelper.js');
 
 
 
@@ -102,15 +102,10 @@ export default class App extends React.Component {
 
     }
 
-
-
-
-
-
     setActiveElement({ moveX, moveY, dx, dy }) {
         let tag = '';
 
-        //
+        //  Assemble the selected element's tag
         if (moveY <= yDivider){
             tag += 'top';
         } else if (moveY > yDivider) {
@@ -175,9 +170,9 @@ export default class App extends React.Component {
         elements[index] = {...elements[index],
             angle: computedAngle, active: true,
             radius: rad + tempRad, border: borderW + tempBorder,
-            incState: tempState, time: tempTime, timer: tempTime
+            incState: tempState, time: tempTime,
         };
-
+        console.log('set time:   '+ tempTime.secs);
         this.setState({ elements });
 
 
@@ -215,42 +210,9 @@ export default class App extends React.Component {
         return refAngle < 0 ? ((180 + refAngle) + 180) : refAngle;
     }
 
-
-
     polarToPercentage( degree ){
         return ((degree * 100)/360);
     }
-
-    degreeToTime( degree, label, currHour ){
-        let time;
-        let string = '';
-        switch (label) {
-            case SECONDS_LABEL:
-                time = (degree * 60)/360;
-                string = Math.round(time) + SECONDS_LABEL;
-                break;
-            case MINUTES_LABEL:
-                time = (degree * 60)/360;
-                string = Math.round(time) + MINUTES_LABEL;
-                break;
-            case HOURS_LABEL:
-                time = (degree * 60)/360;
-                string = currHour + HOURS_LABEL
-                    + Math.round(time) + MINUTES_LABEL;
-                break;
-
-            default:
-                string = 0 + SECONDS_LABEL;
-                break;
-
-        }
-        return string;
-    }
-
-
-
-
-
 
     componentWillMount() {
         // Load the full build.
@@ -262,44 +224,61 @@ export default class App extends React.Component {
                 // responder. This typically means a gesture has succeeded
                 //  Update the current State once a burner has been selected
                 let elements = [...this.state.elements];
-                let index = elements.findIndex(el => el.active === true);
-                elements[index] = {...elements[index],
-                    active: COUNTDOWN_LABEL,
-                    radius: rad, border: borderW, color: countdownColor,};
-                this.setState({ elements });
-                //  Start Timer logic it to the appropriate element index
-                //  elements.findIndex(el => el.active === true)
+                let indexes = _.map(_.keys(_.pickBy(elements,
+                     {active: true})), Number);
+                let timeStamp;
+                let selIndex;
+                for (let index in indexes) {
+                    selIndex = index;
+                    console.log('active: '+ elements[index].name);
+                    timeStamp = elements[index].time;
+                    console.log('selected time: '+ timeStamp.secs);
 
-                timer.setInterval( elements[index].name, ()=>{
-                    //  Decrement time
-                    let elements = [...this.state.elements];
-                    //  Find the indexes of elements currently in COUNTDOWN state
-                    let indexes = _.map(_.keys(_.pickBy(elements,
-                         {active:COUNTDOWN_LABEL})), Number);
-                    for (let index in indexes){
-                        console.log('dec: '+ elements[index].name);
-                        console.log('element time: '+ elements[index].time);
-                        var decTime = contextHelper.getDecrementedTime(elements[index].time);
-                        if (decTime.secs == 0 && decTime.mins == 0 && decTime.hours == 0){
-                            //  Alarm alert
-                            console.log('timer trigger');
-                            timer.clearInterval(tag);
-                            elements[index] = {...elements[index],
-                                timer: null, time: defaultTime, active: false};
-                            this.setState({elements});
-                        } else {
-                            elements[index] = {...elements[index],
-                                time: decTime, active: COUNTDOWN_LABEL,};
-                            this.setState({elements});
+
+                }
+
+                if (timeStamp.secs == 0 && timeStamp.mins == 0
+                    && timeStamp.hours == 0){
+
+                } else {
+
+
+
+                    elements[selIndex] = {...elements[selIndex],
+                        active: COUNTDOWN_LABEL,
+                        radius: rad, border: borderW, color: countdownColor, timer: timeStamp,};
+                    this.setState({ elements });
+                    //  Start Timer logic it to the appropriate element index
+                    //  elements.findIndex(el => el.active === true)
+
+                    timer.setInterval( elements[selIndex].name, ()=>{
+                        //  Decrement time
+                        let elements = [...this.state.elements];
+                        //  Find the indexes of elements currently in COUNTDOWN state
+                        let indexes = _.map(_.keys(_.pickBy(elements,
+                             {active: COUNTDOWN_LABEL})), Number);
+                        for (let index in indexes) {
+                            let tag = elements[index].name;
+
+                            let tempTime = elements[index].time;
+                            var decTime = contextHelper.getDecrementedTime(elements[index].time);
+                            if (decTime.secs == 0 && decTime.mins == 0 && decTime.hours == 0){
+                                //  Alarm alert
+                                console.log('zeroed timer trigger');
+                                timer.clearInterval(tag);
+                                elements[index] = {...elements[index],
+                                    time: defaultTime, timer: null, active: false,};
+                                this.setState({elements});
+                            } else {
+                                console.log('timer trigger 1');
+
+                                elements[index] = {...elements[index],
+                                    time: decTime, active: COUNTDOWN_LABEL,};
+                                this.setState({elements});
+                            }
                         }
-                    }
-
-
-
-
-                }, 1000);
-
-
+                    }, 1000);
+                }
 
 
 
@@ -310,66 +289,28 @@ export default class App extends React.Component {
 
     render() {
         var _state = this.state.elements;
+        console.log('curr time: '+contextHelper.timeToTotalSeconds(_state[0].time));
+        if(_state[0].timer != null){
+            console.log('src time: '+contextHelper.timeToTotalSeconds(_state[0].timer));
+        }
+
         return (
             <View style={styles.container} {...this._panResponder.panHandlers}>
-                <View style={styles.elementWrapper}
-                >
-
+                <View style={styles.elementWrapper}>
                     <ProgressCircle
-                                percent={_state[0].active === COUNTDOWN_LABEL ? this.timeToPercent(_state[0].time, _state[0].timer) : this.polarToPercentage(_state[0].angle)}
+                                percent={_state[0].active === COUNTDOWN_LABEL ? contextHelper.timeToPercent(_state[0].time, _state[0].timer) : this.polarToPercentage(_state[0].angle)}
                                 radius={_state[0].radius}
                                 borderWidth={_state[0].border}
                                 color={_state[0].color}
                                 shadowColor={this.shadowColor}
                                 bgColor={this.backgroundColor}
                             >
-                                <Text style={{ fontSize: 18 }}>{_state[0].active === COUNTDOWN_LABEL ? this.timeToString(_state[0].time) : this.degreeToTime(_state[0].angle,
+                                <Text style={{ fontSize: 18 }}>{_state[0].active === COUNTDOWN_LABEL ? contextHelper.timeToString(_state[0].time) : contextHelper.timeToLabel(contextHelper.degreeToTime(_state[0].angle,
                                 _state[0].incState,
-                                _state[0].time.hours)}</Text>
+                                _state[0].time),_state[0].incState)}</Text>
                     </ProgressCircle>
                 </View>
-                <View style={styles.elementWrapper}>
-                <ProgressCircle
-                            percent={_state[1].active === COUNTDOWN_LABEL ? this.timeToPercent(_state[1].time, _state[1].timer) : this.polarToPercentage(_state[1].angle)}
-                            radius={_state[1].radius}
-                            borderWidth={_state[1].border}
-                            color={_state[1].color}
-                            shadowColor={this.shadowColor}
-                            bgColor={this.backgroundColor}
-                        >
-                            <Text style={{ fontSize: 18 }}>{this.degreeToTime(_state[1].angle,
-                            _state[1].incState,
-                            _state[1].time.hours)}</Text>
-                </ProgressCircle>
-                </View>
-                <View style={styles.elementWrapper}>
-                    <ProgressCircle
-                                percent={_state[2].active === COUNTDOWN_LABEL ? this.timeToPercent(_state[2].time, _state[2].timer) : this.polarToPercentage(_state[2].angle)}
-                                radius={_state[2].radius}
-                                borderWidth={_state[2].border}
-                                color={_state[2].color}
-                                shadowColor={this.shadowColor}
-                                bgColor={this.backgroundColor}
-                            >
-                                <Text style={{ fontSize: 18 }}>{this.degreeToTime(_state[2].angle,
-                                _state[2].incState,
-                                _state[2].time.hours)}</Text>
-                    </ProgressCircle>
-                </View>
-                <View style={styles.elementWrapper}>
-                    <ProgressCircle
-                                percent={_state[3].active == COUNTDOWN_LABEL ? this.timeToPercent(_state[3].time, _state[3].timer) : this.polarToPercentage(_state[3].angle)}
-                                radius={_state[3].radius}
-                                borderWidth={_state[3].border}
-                                color={_state[3].color}
-                                shadowColor={this.shadowColor}
-                                bgColor={this.backgroundColor}
-                            >
-                                <Text style={{ fontSize: 18 }}>{this.degreeToTime(_state[3].angle,
-                                _state[3].incState,
-                                _state[3].time.hours)}</Text>
-                </ProgressCircle>
-                </View>
+
 
             </View>
 

@@ -1,4 +1,13 @@
+//  Duplicate labels
+// TODO: refactor to use global constant var across varied scopes
+const SECONDS_LABEL = 's';
+const MINUTES_LABEL = 'm';
+const HOURS_LABEL = 'h';
+const COUNTDOWN_LABEL = 'countdown';
+
 module.exports = {
+
+
     timeToPercent: function( currTime , srcTime){
         let srcT = this.timeToTotalSeconds(srcTime);
         let currT = this.timeToTotalSeconds(currTime);
@@ -78,14 +87,14 @@ module.exports = {
             case SECONDS_LABEL:
                 return {
                     label: dirForward == true ? MINUTES_LABEL : SECONDS_LABEL,
-                    mods: helper.getCSSMods(MINUTES_LABEL),
+                    mods: this.getCSSMods(MINUTES_LABEL),
                 };
                 break;
 
             case MINUTES_LABEL:
                 return {
                     label: dirForward == true ? HOURS_LABEL : SECONDS_LABEL,
-                    mods: helper.getCSSMods(HOURS_LABEL),
+                    mods: this.getCSSMods(HOURS_LABEL),
                 };
                 break;
 
@@ -100,11 +109,48 @@ module.exports = {
                 }
                 return {
                     label: labelString,
-                    mods: helper.getCSSMods(HOURS_LABEL),
+                    mods: this.getCSSMods(HOURS_LABEL),
                 };
                 break;
             default:
                 break;
         }
+    },
+    timeToLabel: function ( time, label ){
+        let string;
+        switch (label) {
+            case SECONDS_LABEL:
+                string = Math.round(time.secs) + SECONDS_LABEL;
+                break;
+            case MINUTES_LABEL:
+                string = Math.round(time.mins) + MINUTES_LABEL;
+                break;
+            case HOURS_LABEL:
+                string = time.hours + HOURS_LABEL
+                    + Math.round(time.mins) + MINUTES_LABEL;
+                break;
+            default:
+                string = 0 + SECONDS_LABEL;
+                break;
+        }
+        return string;
+    },
+    degreeToTime: function ( degree, label, currTime ){
+        let time = currTime;
+        let string = '';
+        switch (label) {
+            case SECONDS_LABEL:
+                time.secs = Math.round((degree * 60)/360);
+                break;
+            case MINUTES_LABEL:
+                time.mins = Math.round((degree * 60)/360);
+                break;
+            case HOURS_LABEL:
+                time.hours = Math.round((degree * 60)/360);
+                break;
+            default:
+                break;
+        }
+        return time;
     }
 }
