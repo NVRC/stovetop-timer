@@ -152,5 +152,22 @@ module.exports = {
                 break;
         }
         return time;
-    }
+    },
+    tagToDisplayString: function ( tag ){
+        let str = '';
+        console.log('display tag: '+tag);
+        if (tag.includes('top')){
+            str += 'Top ';
+        } else if (tag.includes('bottom')){
+            str += 'Bottom ';
+        }
+        if (tag.includes('left')){
+            str += 'Left ';
+        } else if (tag.includes('right')){
+            str += 'Right ';
+        }
+
+        str += 'element timer has fired!';
+        return str;
+    },
 }

@@ -4,7 +4,8 @@ import {    StyleSheet,
             View,
             PanResponder,
             Animated,
-            Dimensions } from 'react-native';
+            Dimensions,
+            Alert } from 'react-native';
 import { Col, Row, Grid } from "react-native-easy-grid";
 import ProgressCircle from 'react-native-progress-circle';
 
@@ -214,6 +215,18 @@ export default class App extends React.Component {
         return ((degree * 100)/360);
     }
 
+    generateAlert( tag ){
+        //  Launch alert and sound until OK function is handled
+        Alert.alert(
+            'Timer Alert',
+            contextHelper.tagToDisplayString(tag),
+            [
+                {text: 'Ok', onPress: () => console.log('Stop alarm sound')},
+            ],
+            {cancelable: false}
+        )
+    }
+
     componentWillMount() {
         // Load the full build.
         this._panResponder = PanResponder.create({
@@ -241,9 +254,6 @@ export default class App extends React.Component {
                     && timeStamp.hours == 0){
 
                 } else {
-
-
-
                     elements[selIndex] = {...elements[selIndex],
                         active: COUNTDOWN_LABEL,
                         radius: rad, border: borderW, color: countdownColor, timer: timeStamp,};
@@ -265,10 +275,16 @@ export default class App extends React.Component {
                             if (decTime.secs == 0 && decTime.mins == 0 && decTime.hours == 0){
                                 //  Alarm alert
                                 console.log('zeroed timer trigger');
+                                console.log('tag :'+tag);
                                 timer.clearInterval(tag);
                                 elements[index] = {...elements[index],
                                     time: defaultTime, timer: null, active: false,};
+
                                 this.setState({elements});
+                                this.generateAlert( tag );
+
+                                //  TODO:
+                                //  setup flashing red element until Alert dialog is dismissed
                             } else {
                                 console.log('timer trigger 1');
 
@@ -279,8 +295,6 @@ export default class App extends React.Component {
                         }
                     }, 1000);
                 }
-
-
 
             },
             onPanResponderMove: (evt,gestureState) => this.setActiveElement(gestureState),
