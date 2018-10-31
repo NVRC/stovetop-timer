@@ -278,7 +278,7 @@ export default class App extends React.Component {
                                 console.log('tag :'+tag);
                                 timer.clearInterval(tag);
                                 elements[index] = {...elements[index],
-                                    time: defaultTime, timer: null, active: false,};
+                                    time: defaultTime, timer: null, active: false, color: alertColor, angle: 360};
 
                                 this.setState({elements});
                                 this.generateAlert( tag );
@@ -322,6 +322,48 @@ export default class App extends React.Component {
                                 <Text style={{ fontSize: 18 }}>{_state[0].active === COUNTDOWN_LABEL ? contextHelper.timeToString(_state[0].time) : contextHelper.timeToLabel(contextHelper.degreeToTime(_state[0].angle,
                                 _state[0].incState,
                                 _state[0].time),_state[0].incState)}</Text>
+                    </ProgressCircle>
+                </View>
+                <View style={styles.elementWrapper}>
+                    <ProgressCircle
+                                percent={_state[1].active === COUNTDOWN_LABEL ? contextHelper.timeToPercent(_state[1].time, _state[1].timer) : this.polarToPercentage(_state[1].angle)}
+                                radius={_state[1].radius}
+                                borderWidth={_state[1].border}
+                                color={_state[1].color}
+                                shadowColor={this.shadowColor}
+                                bgColor={this.backgroundColor}
+                            >
+                                <Text style={{ fontSize: 18 }}>{_state[1].active === COUNTDOWN_LABEL ? contextHelper.timeToString(_state[1].time) : contextHelper.timeToLabel(contextHelper.degreeToTime(_state[1].angle,
+                                _state[1].incState,
+                                _state[1].time),_state[1].incState)}</Text>
+                    </ProgressCircle>
+                </View>
+                <View style={styles.elementWrapper}>
+                    <ProgressCircle
+                                percent={_state[2].active === COUNTDOWN_LABEL ? contextHelper.timeToPercent(_state[2].time, _state[2].timer) : this.polarToPercentage(_state[2].angle)}
+                                radius={_state[2].radius}
+                                borderWidth={_state[2].border}
+                                color={_state[2].color}
+                                shadowColor={this.shadowColor}
+                                bgColor={this.backgroundColor}
+                            >
+                                <Text style={{ fontSize: 18 }}>{_state[2].active === COUNTDOWN_LABEL ? contextHelper.timeToString(_state[2].time) : contextHelper.timeToLabel(contextHelper.degreeToTime(_state[2].angle,
+                                _state[2].incState,
+                                _state[2].time),_state[2].incState)}</Text>
+                    </ProgressCircle>
+                </View>
+                <View style={styles.elementWrapper}>
+                    <ProgressCircle
+                                percent={_state[3].active === COUNTDOWN_LABEL ? contextHelper.timeToPercent(_state[3].time, _state[3].timer) : this.polarToPercentage(_state[3].angle)}
+                                radius={_state[3].radius}
+                                borderWidth={_state[3].border}
+                                color={_state[3].color}
+                                shadowColor={this.shadowColor}
+                                bgColor={this.backgroundColor}
+                            >
+                                <Text style={{ fontSize: 18 }}>{_state[3].active === COUNTDOWN_LABEL ? contextHelper.timeToString(_state[3].time) : contextHelper.timeToLabel(contextHelper.degreeToTime(_state[3].angle,
+                                _state[3].incState,
+                                _state[3].time),_state[3].incState)}</Text>
                     </ProgressCircle>
                 </View>
 
