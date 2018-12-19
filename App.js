@@ -101,6 +101,41 @@ export default class App extends React.Component {
             ],
         };
 
+        timer.setInterval( 'Constant ', ()=>{
+            //  Decrement time
+            let elements = [...this.state.elements];
+            //  Find the indexes of elements currently in COUNTDOWN state
+            let indexes = _.map(_.keys(_.pickBy(elements,
+                 {active: COUNTDOWN_LABEL})), Number);
+            for (let i = 0; i < indexes.length; i++) {
+                let selIndex = indexes[i];
+                let tag = elements[selIndex].name;
+
+                let tempTime = elements[selIndex].time;
+                var decTime = contextHelper.getDecrementedTime(elements[selIndex].time);
+                if (decTime.secs == 0 && decTime.mins == 0 && decTime.hours == 0){
+                    //  Alarm alert
+                    console.log('zeroed timer trigger');
+                    console.log('tag :'+tag);
+                    timer.clearInterval(tag);
+                    elements[selIndex] = {...elements[selIndex],
+                        time: defaultTime, timer: null, active: false, color: alertColor, angle: 360};
+
+                    this.setState({elements});
+                    this.generateAlert( tag );
+
+                    //  TODO:
+                    //  setup flashing red element until Alert dialog is dismissed
+                } else {
+                    console.log('timer trigger 1');
+
+                    elements[selIndex] = {...elements[selIndex],
+                        time: decTime, active: COUNTDOWN_LABEL,};
+                    this.setState({elements});
+                }
+            }
+        }, 1000);
+
     }
 
     setActiveElement({ moveX, moveY, dx, dy }) {
@@ -118,9 +153,11 @@ export default class App extends React.Component {
         } else if (moveX < xDivider){
             tag += 'left';
         }
+        console.log('Set tag: '+tag);
         //  Update the current State once a burner has been selected
         let elements = [...this.state.elements];
         let index = elements.findIndex(el => el.name === tag);
+        console.log('Computed index: '+index);
 
         //  Cache previous angle
 
@@ -173,7 +210,11 @@ export default class App extends React.Component {
             radius: rad + tempRad, border: borderW + tempBorder,
             incState: tempState, time: tempTime,
         };
-        console.log('set time:   '+ tempTime.secs);
+        //  TODO: Resolve bug with 'tempTime' set incorrectly and therefore not
+        //  prompting timer countdowns
+        console.log('compAngle: '+computedAngle);
+        console.log('set time below');
+        console.log(tempTime);
         this.setState({ elements });
 
 
@@ -241,10 +282,12 @@ export default class App extends React.Component {
                      {active: true})), Number);
                 let timeStamp;
                 let selIndex;
-                for (let index in indexes) {
-                    selIndex = index;
-                    console.log('active: '+ elements[index].name);
-                    timeStamp = elements[index].time;
+                console.log('Indexes: '+indexes);
+                for (let i = 0; i < indexes.length; i++) {
+                    selIndex = indexes[i];
+                    console.log('active selIndex: '+selIndex);
+                    console.log('active: '+ elements[selIndex].name);
+                    timeStamp = elements[selIndex].time;
                     console.log('selected time: '+ timeStamp.secs);
 
 
@@ -254,46 +297,29 @@ export default class App extends React.Component {
                     && timeStamp.hours == 0){
 
                 } else {
+                    console.log('selIndex: '+selIndex);
+                    console.log(timeStamp.secs);
+                    //  Init scoped timeStamp
+                    //  hoping to address the problem binding to elements[i].timer
+                    let tStamp = {
+                        secs: 0,
+                        mins: 0,
+                        hours: 0,
+                    };
+
+                    tStamp.secs = timeStamp.secs;
+                    tStamp.mins = timeStamp.mins;
+                    tStamp.hours = timeStamp.hours;
+                    console.log(tStamp);
                     elements[selIndex] = {...elements[selIndex],
                         active: COUNTDOWN_LABEL,
-                        radius: rad, border: borderW, color: countdownColor, timer: timeStamp,};
+                        radius: rad, border: borderW, color: countdownColor, time: tStamp,
+                        timer: tStamp,};
                     this.setState({ elements });
                     //  Start Timer logic it to the appropriate element index
                     //  elements.findIndex(el => el.active === true)
 
-                    timer.setInterval( elements[selIndex].name, ()=>{
-                        //  Decrement time
-                        let elements = [...this.state.elements];
-                        //  Find the indexes of elements currently in COUNTDOWN state
-                        let indexes = _.map(_.keys(_.pickBy(elements,
-                             {active: COUNTDOWN_LABEL})), Number);
-                        for (let index in indexes) {
-                            let tag = elements[index].name;
 
-                            let tempTime = elements[index].time;
-                            var decTime = contextHelper.getDecrementedTime(elements[index].time);
-                            if (decTime.secs == 0 && decTime.mins == 0 && decTime.hours == 0){
-                                //  Alarm alert
-                                console.log('zeroed timer trigger');
-                                console.log('tag :'+tag);
-                                timer.clearInterval(tag);
-                                elements[index] = {...elements[index],
-                                    time: defaultTime, timer: null, active: false, color: alertColor, angle: 360};
-
-                                this.setState({elements});
-                                this.generateAlert( tag );
-
-                                //  TODO:
-                                //  setup flashing red element until Alert dialog is dismissed
-                            } else {
-                                console.log('timer trigger 1');
-
-                                elements[index] = {...elements[index],
-                                    time: decTime, active: COUNTDOWN_LABEL,};
-                                this.setState({elements});
-                            }
-                        }
-                    }, 1000);
                 }
 
             },
@@ -303,7 +329,7 @@ export default class App extends React.Component {
 
     render() {
         var _state = this.state.elements;
-        console.log('curr time: '+contextHelper.timeToTotalSeconds(_state[0].time));
+        console.log(_state);
         if(_state[0].timer != null){
             console.log('src time: '+contextHelper.timeToTotalSeconds(_state[0].timer));
         }
@@ -340,7 +366,7 @@ export default class App extends React.Component {
                 </View>
                 <View style={styles.elementWrapper}>
                     <ProgressCircle
-                                percent={_state[2].active === COUNTDOWN_LABEL ? contextHelper.timeToPercent(_state[2].time, _state[2].timer) : this.polarToPercentage(_state[2].angle)}
+                                percent={_state[1].active === COUNTDOWN_LABEL ? contextHelper.timeToPercent(_state[2].time, _state[2].timer) : this.polarToPercentage(_state[2].angle)}
                                 radius={_state[2].radius}
                                 borderWidth={_state[2].border}
                                 color={_state[2].color}
@@ -366,8 +392,6 @@ export default class App extends React.Component {
                                 _state[3].time),_state[3].incState)}</Text>
                     </ProgressCircle>
                 </View>
-
-
             </View>
 
         );
