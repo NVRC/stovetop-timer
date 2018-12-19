@@ -101,6 +101,41 @@ export default class App extends React.Component {
             ],
         };
 
+        timer.setInterval( 'Constant ', ()=>{
+            //  Decrement time
+            let elements = [...this.state.elements];
+            //  Find the indexes of elements currently in COUNTDOWN state
+            let indexes = _.map(_.keys(_.pickBy(elements,
+                 {active: COUNTDOWN_LABEL})), Number);
+            for (let i = 0; i < indexes.length; i++) {
+                let selIndex = indexes[i];
+                let tag = elements[selIndex].name;
+
+                let tempTime = elements[selIndex].time;
+                var decTime = contextHelper.getDecrementedTime(elements[selIndex].time);
+                if (decTime.secs == 0 && decTime.mins == 0 && decTime.hours == 0){
+                    //  Alarm alert
+                    console.log('zeroed timer trigger');
+                    console.log('tag :'+tag);
+                    timer.clearInterval(tag);
+                    elements[selIndex] = {...elements[selIndex],
+                        time: defaultTime, timer: null, active: false, color: alertColor, angle: 360};
+
+                    this.setState({elements});
+                    this.generateAlert( tag );
+
+                    //  TODO:
+                    //  setup flashing red element until Alert dialog is dismissed
+                } else {
+                    console.log('timer trigger 1');
+
+                    elements[selIndex] = {...elements[selIndex],
+                        time: decTime, active: COUNTDOWN_LABEL,};
+                    this.setState({elements});
+                }
+            }
+        }, 1000);
+
     }
 
     setActiveElement({ moveX, moveY, dx, dy }) {
@@ -263,47 +298,28 @@ export default class App extends React.Component {
 
                 } else {
                     console.log('selIndex: '+selIndex);
+                    console.log(timeStamp.secs);
+                    //  Init scoped timeStamp
+                    //  hoping to address the problem binding to elements[i].timer
+                    let tStamp = {
+                        secs: 0,
+                        mins: 0,
+                        hours: 0,
+                    };
+
+                    tStamp.secs = timeStamp.secs;
+                    tStamp.mins = timeStamp.mins;
+                    tStamp.hours = timeStamp.hours;
+                    console.log(tStamp);
                     elements[selIndex] = {...elements[selIndex],
                         active: COUNTDOWN_LABEL,
-                        radius: rad, border: borderW, color: countdownColor, timer: timeStamp,};
+                        radius: rad, border: borderW, color: countdownColor, time: tStamp,
+                        timer: tStamp,};
                     this.setState({ elements });
                     //  Start Timer logic it to the appropriate element index
                     //  elements.findIndex(el => el.active === true)
 
-                    timer.setInterval( elements[selIndex].name, ()=>{
-                        //  Decrement time
-                        let elements = [...this.state.elements];
-                        //  Find the indexes of elements currently in COUNTDOWN state
-                        let indexes = _.map(_.keys(_.pickBy(elements,
-                             {active: COUNTDOWN_LABEL})), Number);
-                        for (let i = 0; i < indexes.length; i++) {
-                            let selIndex = indexes[i];
-                            let tag = elements[selIndex].name;
 
-                            let tempTime = elements[selIndex].time;
-                            var decTime = contextHelper.getDecrementedTime(elements[selIndex].time);
-                            if (decTime.secs == 0 && decTime.mins == 0 && decTime.hours == 0){
-                                //  Alarm alert
-                                console.log('zeroed timer trigger');
-                                console.log('tag :'+tag);
-                                timer.clearInterval(tag);
-                                elements[selIndex] = {...elements[selIndex],
-                                    time: defaultTime, timer: null, active: false, color: alertColor, angle: 360};
-
-                                this.setState({elements});
-                                this.generateAlert( tag );
-
-                                //  TODO:
-                                //  setup flashing red element until Alert dialog is dismissed
-                            } else {
-                                console.log('timer trigger 1');
-
-                                elements[selIndex] = {...elements[selIndex],
-                                    time: decTime, active: COUNTDOWN_LABEL,};
-                                this.setState({elements});
-                            }
-                        }
-                    }, 1000);
                 }
 
             },
@@ -346,6 +362,34 @@ export default class App extends React.Component {
                                 <Text style={{ fontSize: 18 }}>{_state[1].active === COUNTDOWN_LABEL ? contextHelper.timeToString(_state[1].time) : contextHelper.timeToLabel(contextHelper.degreeToTime(_state[1].angle,
                                 _state[1].incState,
                                 _state[1].time),_state[1].incState)}</Text>
+                    </ProgressCircle>
+                </View>
+                <View style={styles.elementWrapper}>
+                    <ProgressCircle
+                                percent={_state[1].active === COUNTDOWN_LABEL ? contextHelper.timeToPercent(_state[2].time, _state[2].timer) : this.polarToPercentage(_state[2].angle)}
+                                radius={_state[2].radius}
+                                borderWidth={_state[2].border}
+                                color={_state[2].color}
+                                shadowColor={this.shadowColor}
+                                bgColor={this.backgroundColor}
+                            >
+                                <Text style={{ fontSize: 18 }}>{_state[2].active === COUNTDOWN_LABEL ? contextHelper.timeToString(_state[2].time) : contextHelper.timeToLabel(contextHelper.degreeToTime(_state[2].angle,
+                                _state[2].incState,
+                                _state[2].time),_state[2].incState)}</Text>
+                    </ProgressCircle>
+                </View>
+                <View style={styles.elementWrapper}>
+                    <ProgressCircle
+                                percent={_state[3].active === COUNTDOWN_LABEL ? contextHelper.timeToPercent(_state[3].time, _state[3].timer) : this.polarToPercentage(_state[3].angle)}
+                                radius={_state[3].radius}
+                                borderWidth={_state[3].border}
+                                color={_state[3].color}
+                                shadowColor={this.shadowColor}
+                                bgColor={this.backgroundColor}
+                            >
+                                <Text style={{ fontSize: 18 }}>{_state[3].active === COUNTDOWN_LABEL ? contextHelper.timeToString(_state[3].time) : contextHelper.timeToLabel(contextHelper.degreeToTime(_state[3].angle,
+                                _state[3].incState,
+                                _state[3].time),_state[3].incState)}</Text>
                     </ProgressCircle>
                 </View>
             </View>
