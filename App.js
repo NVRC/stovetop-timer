@@ -107,6 +107,7 @@ export default class App extends React.Component {
             //  Find the indexes of elements currently in COUNTDOWN state
             let indexes = _.map(_.keys(_.pickBy(elements,
                  {active: COUNTDOWN_LABEL})), Number);
+            console.log(indexes);
             for (let i = 0; i < indexes.length; i++) {
                 let selIndex = indexes[i];
                 let tag = elements[selIndex].name;
@@ -168,7 +169,17 @@ export default class App extends React.Component {
         let tempState = elements[index].incState;
         let tempBorder;
         let tempRad;
-        let tempTime = elements[index].time;
+
+        let tStamp = {
+            secs: 0,
+            mins: 0,
+            hours: 0,
+        };
+
+        tStamp.secs = elements[index].secs == undefined ? 0 : elements[index].secs;
+        tStamp.mins = elements[index].mins == undefined ? 0 : elements[index].mins;
+        tStamp.hours = elements[index].hours == undefined ? 0 : elements[index].hours;
+        let tempTime = tStamp;
 
         let computedState;
         //  Rad case
@@ -366,7 +377,7 @@ export default class App extends React.Component {
                 </View>
                 <View style={styles.elementWrapper}>
                     <ProgressCircle
-                                percent={_state[1].active === COUNTDOWN_LABEL ? contextHelper.timeToPercent(_state[2].time, _state[2].timer) : this.polarToPercentage(_state[2].angle)}
+                                percent={_state[2].active === COUNTDOWN_LABEL ? contextHelper.timeToPercent(_state[2].time, _state[2].timer) : this.polarToPercentage(_state[2].angle)}
                                 radius={_state[2].radius}
                                 borderWidth={_state[2].border}
                                 color={_state[2].color}
